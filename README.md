@@ -1,6 +1,6 @@
 # node-mongo-csv-demo-2017
 
-Import CSV files as downloaded form the police crimes database for Thames Valley.
+Import CSV files as downloaded from the police crimes database.
 
 Display these in a grid of sectors, each one tenth of a degree. 
 
