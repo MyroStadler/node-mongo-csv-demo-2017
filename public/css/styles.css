@@ -1,0 +1,15 @@
+.chunks-holder {
+	position: relative;
+	margin: 50px;
+}
+.chunk-renderer {
+	width: 100px;
+	height: 100px;
+	overflow: hidden;
+	position: absolute;
+	border: 1px solid #ccc;
+	background-color: white;
+	color: black;
+	font-family: Arial;
+	font-size: 14px;
+}

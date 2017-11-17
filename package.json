@@ -1,0 +1,18 @@
+{
+  "name": "help-tha-police",
+  "description": "Straight from the underground",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "bson": "^1.0.4",
+    "csv-parse": "^2.0.0",
+    "expect.js": "*",
+    "express": "3.x",
+    "fs": "0.0.1-security",
+    "handlebars": "^4.0.11",
+    "mocha": "*",
+    "mongodb": "*",
+    "path": "^0.12.7",
+    "superagent": "*"
+  }
+}

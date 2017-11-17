@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Chunks</title>
+  <meta name="description" content="Chunky chunks">
+  <link rel="stylesheet" href="/css/styles.css?v=1.0">
+  <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+  <![endif]-->
+  <script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+</head>
+
+<body>
+	<p>
+		Crimes by region. Each block is a tenth of a degree, so roughly 7 miles across. 
+		These crimes fall under the jurisdiction of Thames Valley Police (Berkshire, Oxfordshire and Buckinghamshire).
+		See console here for the operational data returned by /crimes/chunks.
+	</p>
+	<div class="chunks-holder">
+		
+	</div>
+	<div class="chunk-crimes-holder">
+		<h3 class="title"></h3>
+		<div class="crimes">
+
+		</div>
+	</div>
+	
+	<script>
+		(function($){
+			// heatmap the chunks for number of crimes? percentage unsolved?
+			var scalarToShortRainbow = function(f) {
+				// 0 (blue) to 1 (red) through cyan, green, yellow
+				// adapted from https://www.particleincell.com/2014/colormap/
+				var a=(1-f)/0.25;
+				var X=Math.floor(a);
+				var Y=Math.floor(255*(a-X));
+				switch(X)
+				{
+					default: 
+					case 0: return { r: 255, 	g: Y, 		b:0 	}; 
+					case 1: return { r: 255-Y, 	g: 255, 	b:0 	};
+					case 2: return { r: 0, 		g: 255, 	b:Y 	};
+					case 3: return { r: 0, 		g: 255-Y, 	b:255 	};
+					case 4: return { r: 0, 		g: 0, 		b:255 	};
+				}
+			};
+			var rgbToHex = function(rgb) {
+				return "#" +
+				(
+					(1 << 24)
+					+ (rgb.r << 16)
+					+ (rgb.g << 8)
+					+ rgb.b
+				)
+				.toString(16) // "1ffffff"
+				.slice(1); // "ffffff"
+			}
+			// onload
+			$(function() {
+				$.ajax({
+					url: '/crimes/chunks',
+					method: 'GET',
+					success: function(data) {
+						console.log('/crimes/chunks', data);
+						// var data = JSON.parse(chunksResponse);
+						var $chunksContainer = $('.chunks-holder');
+						var $detail = $('.chunk-crimes-holder');
+						var $detailTitle = $('.chunk-crimes-holder .title');
+						var $detailContainer = $('.chunk-crimes-holder .crimes');
+						for(var y=data.chunk.min.y; y<=data.chunk.max.y; y++) {
+							for(var x=data.chunk.min.x; x<=data.chunk.max.x; x++) {
+								var $chunkRenderer = $('<div class="chunk-renderer"></div>')
+										.attr('data-chunk', x.toString() + '_' + y.toString())
+										.css({ top: 100 * (y - data.chunk.min.y), 
+											left: 100 * (x - data.chunk.min.x)})
+										.click(function() {
+											// chunk click
+											var chunkId = $(this).attr('data-chunk');
+											$detailTitle.html(chunkId);
+											$.ajax({
+												url: '/crimes/by/chunk/' + chunkId,
+												method: 'GET',
+												success: function(byChunkData) {
+													$detailContainer
+													.css('white-space', 'pre')
+													.html(JSON.stringify(byChunkData, null, 2));
+													$(window).scrollTop($detail.offset().top);
+												}
+											});
+										});
+								$chunksContainer.append($chunkRenderer);
+							}
+						}
+						$detail.css({position: 'absolute', top: $chunksContainer.offset().top + 100 + 100 * (y - data.chunk.min.y)});
+						var lowestCount = Infinity;
+						var highestCount = -Infinity;
+						for(var i=0; i<data.chunk.counts.length; i++) {
+							var chunkId = data.chunk.counts[i]._id;
+							var count = data.chunk.counts[i].count;
+							lowestCount = count < lowestCount ? count : lowestCount;
+							highestCount = count > highestCount ? count : highestCount;
+							$('.chunk-renderer[data-chunk="' + chunkId + '"]')
+									.html('chunk ' + chunkId + ': ' + count.toString() + ' crimes')
+									.attr('data-count', count)
+									;
+								}
+								$.each($chunksContainer.children(), function(i) {
+									var $me = $(this);
+									var count = parseInt($me.attr('data-count'));
+									if(isNaN(count)) {
+										return;
+									}
+									// var howBadIsIt = Math.max(Math.min(count / 100, 1), 0);
+									var howBadIsIt = (count - lowestCount) / (highestCount - lowestCount);
+									$me.css('background-color', rgbToHex(scalarToShortRainbow(howBadIsIt)))
+									;
+
+						});
+					}
+				});
+			});
+		})($);
+	</script>
+</body>
+</html>
+
+
